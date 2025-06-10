@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream> // Librería para trabajar con archivos
 #include <vector>
+#include <limits>
 using namespace std;
 // --- Clase Proceso ---
 class Proceso {
@@ -27,6 +28,15 @@ public:
 ListaProcesos() {
 cabeza = nullptr;
 }
+~ListaProcesos() {
+ Nodo* actual = cabeza;
+ while (actual != nullptr) {
+ Nodo* temp = actual;
+ actual = actual->siguiente;
+ delete temp->proceso;
+ delete temp;
+ }
+ }
 void insertar(Proceso* p) {
 Nodo* nuevo = new Nodo{p, cabeza};
 cabeza = nuevo;
@@ -122,6 +132,13 @@ private:
 NodoArranque* frente;
 public:
 GestorArranque() : frente(nullptr) {}
+ ~GestorArranque() {
+ while (frente != nullptr) {
+ NodoArranque* temp = frente;
+ frente = frente->siguiente;
+ delete temp;
+ }
+ }
 void encolar(Proceso* p) {
 NodoArranque* nuevo = new NodoArranque{p, nullptr};
 if (frente == nullptr || p->prioridad > frente->proceso->prioridad) {
@@ -175,6 +192,13 @@ public:
 PilaMemoria() {
 cima = nullptr;
 }
+ ~PilaMemoria() {
+ while (cima != nullptr) {
+ Bloque* temp = cima;
+ cima = cima->siguiente;
+ delete temp;
+ }
+ }
 void push(int id, int tamano) {
 Bloque* nuevo = new Bloque{id, tamano, cima};
 cima = nuevo;
@@ -235,6 +259,93 @@ push(bloquesTemp[i].first, bloquesTemp[i].second);
 }
 }
 };
+
+void menuProcesos(ListaProcesos& lista);
+void menuArranque(GestorArranque& arranque, ListaProcesos& lista);
+void menuMemoria(PilaMemoria& pila);
+
+void pausa() {
+    cout << "\nPresione Enter para continuar...";
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cin.get();
+}
+
+void menuProcesos(ListaProcesos& lista) {
+    int op;
+    do {
+        cout << "\n--- GESTIÓN DE PROCESOS ---\n";
+        cout << "1. Registrar Proceso\n";
+        cout << "2. Eliminar Proceso\n";
+        cout << "3. Mostrar Lista\n";
+        cout << "4. Modificar Prioridad\n";
+        cout << "0. Volver\n";
+        cout << "Seleccione una opción: ";
+        cin >> op;
+        switch (op) {
+            case 1: {
+                int id, prio; string nombre;
+                cout << "ID: "; cin >> id;
+                cout << "Nombre: "; cin >> nombre;
+                cout << "Prioridad: "; cin >> prio;
+                lista.insertar(new Proceso(id, nombre, prio));
+                break;
+            }
+            case 2: {
+                int id; cout << "ID a eliminar: "; cin >> id; lista.eliminar(id); break; }
+            case 3: lista.mostrar(); break;
+            case 4: {
+                int id, prio; cout << "ID: "; cin >> id; cout << "Nueva prioridad: "; cin >> prio; lista.modificarPrioridad(id, prio); break; }
+            case 0: break;
+            default: cout << "Opción no válida.\n"; break;
+        }
+        if (op != 0) pausa();
+    } while (op != 0);
+}
+
+void menuArranque(GestorArranque& arranque, ListaProcesos& lista) {
+    int op;
+    do {
+        cout << "\n--- COLA DE ARRANQUE ---\n";
+        cout << "1. Encolar Paso\n";
+        cout << "2. Ejecutar Paso\n";
+        cout << "3. Mostrar Cola\n";
+        cout << "0. Volver\n";
+        cout << "Seleccione una opción: ";
+        cin >> op;
+        switch (op) {
+            case 1: {
+                int id; cout << "ID del proceso: "; cin >> id; Proceso* p = lista.buscar(id); if (p) arranque.encolar(p); else cout << "Proceso no encontrado.\n"; break; }
+            case 2: arranque.desencolar(); break;
+            case 3: arranque.mostrar(); break;
+            case 0: break;
+            default: cout << "Opción no válida.\n"; break;
+        }
+        if (op != 0) pausa();
+    } while (op != 0);
+}
+
+void menuMemoria(PilaMemoria& pila) {
+    int op;
+    do {
+        cout << "\n--- GESTIÓN DE MEMORIA ---\n";
+        cout << "1. Asignar Memoria\n";
+        cout << "2. Liberar Memoria\n";
+        cout << "3. Mostrar Memoria\n";
+        cout << "0. Volver\n";
+        cout << "Seleccione una opción: ";
+        cin >> op;
+        switch (op) {
+            case 1: {
+                int id, t; cout << "ID Proceso: "; cin >> id; cout << "Tamaño (MB): "; cin >> t; pila.push(id, t); break; }
+            case 2: pila.pop(); break;
+            case 3: pila.mostrar(); break;
+            case 0: break;
+            default: cout << "Opción no válida.\n"; break;
+        }
+        if (op != 0) pausa();
+    } while (op != 0);
+}
+
 // --- MAIN ---
 int main() {
 ListaProcesos lista;
@@ -243,89 +354,31 @@ PilaMemoria pila;
 int opcion;
 lista.cargar("procesos.txt");
 pila.cargar("memoria.txt");
-do {
-cout << "==============================================\n";
-cout << " SISTEMA DE GESTIÓN DE PROCESOS \n";
-cout << "==============================================\n";
-cout << "\n>> GESTIÓN DE LISTA DE PROCESOS\n";
-cout << " 1. Registrar Proceso\n";
-cout << " 2. Eliminar Proceso\n";
-cout << " 3. Mostrar Lista de Procesos\n";
-cout << " 4. Modificar Prioridad\n";
-cout << "\n>> COLA DE ARRANQUE\n";
-cout << " 5. Encolar Paso de Arranque\n";
-cout << " 6. Ejecutar Paso de Arranque\n";
-cout << " 7. Mostrar Cola de Arranque\n";
-cout << "\n>> GESTIÓN DE MEMORIA (PILA)\n";
-cout << " 8. Asignar Memoria a Proceso\n";
-cout << " 9. Liberar Memoria\n";
-cout << "10. Mostrar Memoria\n";
-cout << "\n==============================================\n";
-cout << " 0. Salir\n";
-cout << "==============================================\n";
-cout << "Seleccione una opción: ";
-cin >> opcion;
-switch (opcion) {
-case 1: {
-int id, prioridad;
-string nombre;
-cout << "ID: "; cin >> id;
-cout << "Nombre: "; cin >> nombre;
-cout << "Prioridad (mayor número = mayor prioridad): "; cin >> prioridad;
-lista.insertar(new Proceso(id, nombre, prioridad));
-break;
-}
-case 2: {
-int id;
-cout << "ID a eliminar: "; cin >> id;
-lista.eliminar(id);
-break;
-}
-case 3:
-lista.mostrar();
-break;
-case 4: {
-int id, prio;
-cout << "ID del proceso: "; cin >> id;
-cout << "Nueva prioridad: "; cin >> prio;
-lista.modificarPrioridad(id, prio);
-break;
-}
-case 5: {
-int id;
-cout << "ID del proceso a encolar: "; cin >> id;
-Proceso* p = lista.buscar(id);
-if (p) arranque.encolar(p);
-else cout << "Proceso no encontrado.\n";
-break;
-}
-case 6:
-arranque.desencolar();
-break;
-case 7:
-arranque.mostrar();
-break;
-case 8: {
-int id, tamano;
-cout << "ID Proceso: "; cin >> id;
-cout << "Tamaño memoria (MB): "; cin >> tamano;
-pila.push(id, tamano);
-break;
-}
-case 9:
-pila.pop();
-break;
-case 10:
-pila.mostrar();
-break;
-case 0:
-cout << "Saliendo...\n";
-lista.guardar("procesos.txt");
-pila.guardar("memoria.txt");
-break;
-default:
-cout << "Opción no válida.\n";
-}
-} while (opcion != 0);
+    do {
+        cout << "==============================================\n";
+        cout << " SISTEMA DE GESTIÓN DE PROCESOS \n";
+        cout << "==============================================\n";
+        cout << "1. Gestión de procesos\n";
+        cout << "2. Cola de arranque\n";
+        cout << "3. Gestión de memoria\n";
+        cout << "0. Salir\n";
+        cout << "==============================================\n";
+        cout << "Seleccione una opción: ";
+        cin >> opcion;
+        switch (opcion) {
+            case 1: menuProcesos(lista); break;
+            case 2: menuArranque(arranque, lista); break;
+            case 3: menuMemoria(pila); break;
+            case 0:
+                cout << "Saliendo...\n";
+                lista.guardar("procesos.txt");
+                pila.guardar("memoria.txt");
+                break;
+            default:
+                cout << "Opción no válida.\n";
+                pausa();
+                break;
+        }
+    } while (opcion != 0);
 return 0;
 }
