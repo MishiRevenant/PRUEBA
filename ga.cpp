@@ -37,16 +37,17 @@ while (actual != nullptr && actual->proceso->id != id) {
 anterior = actual;
 actual = actual->siguiente;
 }
-if (actual != nullptr) {
-if (anterior == nullptr)
-cabeza = actual->siguiente;
-else
-anterior->siguiente = actual->siguiente;
-delete actual;
-cout << "Proceso eliminado.\n";
-} else {
-cout << "Proceso no encontrado.\n";
-}
+        if (actual != nullptr) {
+            if (anterior == nullptr)
+                cabeza = actual->siguiente;
+            else
+                anterior->siguiente = actual->siguiente;
+            delete actual->proceso; // liberar memoria del proceso
+            delete actual;
+            cout << "Proceso eliminado.\n";
+        } else {
+            cout << "Proceso no encontrado.\n";
+        }
 }
 Proceso* buscar(int id) {
 Nodo* actual = cabeza;
